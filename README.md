@@ -3,7 +3,7 @@
 ## Project URL
 
 ```
-<https://deploy-dc115.web.app/>
+https://deploy-dc115.web.app/
 ```
 
 ## Project setup
