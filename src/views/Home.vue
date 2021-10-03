@@ -1,18 +1,28 @@
 <template>
-  <div style="max-width: 700px; margin: 0 auto">
-    <h1>都道府県別の総人口推移グラフ</h1>
-    <Prefectures />
+  <div>
+    <Header />
+    <div class="home">
+      <Prefectures />
+    </div>
   </div>
 </template>
 
 <script>
+import Header from "@/components/Header.vue";
 import Prefectures from "@/components/Prefectures.vue";
 export default {
   name: "Home",
   components: {
+    Header,
     Prefectures,
   },
-  mounted() {},
-  methods: {},
 };
 </script>
+
+<style scoped>
+.home {
+  max-width: 700px;
+  margin: 0 auto;
+  padding-top: 20px;
+}
+</style>

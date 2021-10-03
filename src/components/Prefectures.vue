@@ -2,23 +2,29 @@
   <div>
     <p>選択した都道府県の総人口推移グラフを表示します。</p>
     <div class="frame">
-      <div v-for="i in prefectures" :key="i.prefCode" class="checkbox">
+      <div
+        v-for="prefecture in prefectures"
+        :key="prefecture.prefCode"
+        class="checkbox"
+      >
         <input
           type="checkbox"
-          :id="i.prefCode"
-          :value="i"
-          v-model="checked"
-          @click="lastCheck(i)"
+          :id="prefecture.prefCode"
+          :value="prefecture"
+          v-model="checkedArray"
+          @click="saveLastChecked(prefecture)"
           style="cursor: pointer"
         />
-        <label :for="i.prefCode" style="cursor: pointer">{{
-          i.prefName
+        <label :for="prefecture.prefCode" style="cursor: pointer">{{
+          prefecture.prefName
         }}</label>
       </div>
     </div>
-
-    <!-- {{ last }} -->
-    <charts @all-clear="allClear()" :checked="checked" :last="last" />
+    <charts
+      @all-clear="allClear()"
+      :checkedArray="checkedArray"
+      :lastChecked="lastChecked"
+    />
   </div>
 </template>
 
@@ -33,51 +39,52 @@ export default {
   data() {
     return {
       prefectures: [],
-      checked: [],
-      last: "",
+      checkedArray: [],
+      lastChecked: "",
     };
-  },
-  computed: {
-    isCheckedPref() {
-      return this.prefectures.filter(function (i) {
-        return i.isChecked;
-      });
-    },
   },
   async mounted() {
     await this.fetchPrefectures();
   },
   methods: {
+    /**
+     * RESAS APIで都道府県一覧を取得する
+     */
     async fetchPrefectures() {
       try {
         const res = await axios.get("/api/v1/prefectures");
         this.prefectures = res.data.result;
-        console.log(this.prefectures);
       } catch (error) {
         console.log(error);
       }
     },
-    lastCheck(i) {
-      this.last = i.prefCode;
+    /**
+     * 最後にチェックを付けた、または、外した都道府県のprefCodeを格納する
+     * @param {Object} prefecture - 都道府県情報（都道府県一覧で取得した都道府県番号と都道府県名）
+     */
+    saveLastChecked(prefecture) {
+      this.lastChecked = prefecture.prefCode;
     },
+    /**
+     * チェックをすべて外す
+     */
     allClear() {
-      this.checked.splice(0, this.checked.length);
+      this.checkedArray.splice(0, this.checkedArray.length);
     },
   },
 };
 </script>
 
 <style scoped>
-@media screen and (max-width: 600px) {
+/* 画面サイズが599px以下のときは都道府県一覧に高さを設定する */
+@media screen and (max-width: 599px) {
   .frame {
-    max-height: 200px;
+    height: 200px;
   }
 }
-
 .frame {
   padding: 0.5em 1em;
   margin: 1em;
-  /* border: solid 2px #000000; */
   background: #f9f9f9;
   overflow-y: auto;
   border-radius: 10px;

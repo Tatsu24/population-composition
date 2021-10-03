@@ -1,18 +1,18 @@
 <template>
   <div>
-    <!-- <div>{{ checked }}</div> -->
     <div style="text-align: right">
-      <button class="btn" :disabled="!checked.length" @click="allClear()">
+      <button class="btn" :disabled="!checkedArray.length" @click="allClear()">
         全チェック解除
       </button>
     </div>
     <highcharts
-      v-if="checked.length > 0"
+      v-if="checkedArray.length > 0"
       :options="graph"
       class="charts"
     ></highcharts>
-    <p v-if="!checked.length">都道府県を選択してください</p>
-    <!-- {{ checked }} -->
+    <p v-if="!checkedArray.length" style="padding: 20px 0">
+      都道府県を選択するとグラフが表示されます。
+    </p>
   </div>
 </template>
 
@@ -20,7 +20,8 @@
 import axios from "axios";
 import { Chart } from "highcharts-vue";
 export default {
-  props: ["checked", "last"],
+  name: "Charts",
+  props: ["checkedArray", "lastChecked"],
   components: {
     highcharts: Chart,
   },
@@ -30,16 +31,13 @@ export default {
         chart: {
           type: "line",
           backgroundColor: "#f9f9f9",
-          border: 2,
-          borderColor: "blue",
           borderRadius: 10,
-          ignoreHiddenSeries: false,
         },
         title: {
-          text: "各都道府県の総人口",
+          text: "都道府県別の総人口推移",
         },
         subtitle: {
-          text: '引用：<a href="https://resas.go.jp/#/13/13101" target=”_blank rel="noopener noreferrer">RESAS 地域経済分析システム</a>',
+          text: '引用：<a href="https://resas.go.jp/#/13/13101" target=”_blank" rel="noopener noreferrer">RESAS地域経済分析システム</a>',
         },
         xAxis: {
           title: {
@@ -75,64 +73,75 @@ export default {
     };
   },
   watch: {
-    checked(newV) {
+    // チェックボックスを監視し、新しいチェックの場合はグラフの追加、削除された場合はグラフの削除を行う
+    checkedArray(newV) {
       let _this = this;
-      const newChecked = newV.filter(function (hero) {
-        return hero.prefCode == _this.last;
+      const newChecked = newV.filter(function (prefecture) {
+        return prefecture.prefCode == _this.lastChecked;
       });
       if (newChecked.length > 0) {
-        console.log("add", this.last);
         this.fetchPopulationComposition(newChecked[0]);
       } else {
-        console.log("delete", this.last);
         this.deleteGraph();
       }
     },
   },
-  async mounted() {},
   methods: {
-    async fetchPopulationComposition(newChecked) {
-      console.log(newChecked);
+    /**
+     * RESAS APIで総人口を取得する
+     * @param {Object} prefecture - 都道府県一覧で取得した都道府県番号と都道府県名
+     */
+    async fetchPopulationComposition(prefecture) {
       try {
         const res = await axios.get("api/v1/population/composition/perYear", {
           params: {
-            prefCode: this.last,
+            prefCode: this.lastChecked,
             cityCode: "-",
           },
         });
-        // console.log(res.data);
-        const result = res.data.result.data[0].data;
-        console.log(result);
-        let years = [];
-        let values = [];
-        for (let i = 0; i < result.length; i++) {
-          years.push(result[i].year);
-          values.push(result[i].value);
-        }
-        console.log(values);
-        this.$set(this.graph.xAxis, "categories", years);
-        // this.$set(this.graph.series[0], "data", values);
-        const graphData = {
-          name: newChecked.prefName,
-          id: newChecked.prefCode,
-          data: values,
-          marker: {
-            enabled: true,
-          },
-        };
-        this.graph.series.push(graphData);
+        const population = res.data.result.data[0].data;
+        this.drawGraph(prefecture, population);
       } catch (error) {
         console.log(error);
       }
     },
+    /**
+     * グラフを描画する
+     * @param {Object} prefecture - 都道府県一覧で取得した都道府県番号と都道府県名
+     * @param {array} population - 1960年から2045年までの総人口推移の配列
+     */
+    drawGraph(prefecture, population) {
+      let years = [];
+      let values = [];
+      // グラフ描画のためにデータを配列に保存
+      for (let i = 0; i < population.length; i++) {
+        years.push(population[i].year);
+        values.push(population[i].value);
+      }
+      this.$set(this.graph.xAxis, "categories", years);
+      const graphData = {
+        name: prefecture.prefName,
+        id: prefecture.prefCode,
+        data: values,
+        marker: {
+          enabled: true,
+        },
+      };
+      this.graph.series.push(graphData);
+    },
+    /**
+     * グラフを削除する
+     */
     deleteGraph() {
       let _this = this;
       this.graph.series = this.graph.series.filter(function (series) {
-        return series.id != _this.last;
+        return series.id != _this.lastChecked;
       });
-      console.log(this.graph.series);
       this.graph.series.splice();
     },
+    /**
+     * グラフをすべて削除する
+     */
     allClear() {
       this.$emit("all-clear");
       this.graph.series.splice(0, this.graph.series.length);
