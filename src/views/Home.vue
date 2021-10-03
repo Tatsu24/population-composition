@@ -1,5 +1,6 @@
 <template>
-  <div class="home">
+  <div style="max-width: 700px; margin: 0 auto">
+    <h1>都道府県別の総人口推移グラフ</h1>
     <Prefectures />
   </div>
 </template>

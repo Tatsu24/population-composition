@@ -1,8 +1,18 @@
 <template>
   <div>
     <!-- <div>{{ checked }}</div> -->
-    <highcharts :options="graph"></highcharts>
-    <!-- {{ graph }} -->
+    <div style="text-align: right">
+      <button class="btn" :disabled="!checked.length" @click="allClear()">
+        全チェック解除
+      </button>
+    </div>
+    <highcharts
+      v-if="checked.length > 0"
+      :options="graph"
+      class="charts"
+    ></highcharts>
+    <p v-if="!checked.length">都道府県を選択してください</p>
+    <!-- {{ checked }} -->
   </div>
 </template>
 
@@ -17,38 +27,46 @@ export default {
   data() {
     return {
       graph: {
+        chart: {
+          type: "line",
+          backgroundColor: "#f9f9f9",
+          border: 2,
+          borderColor: "blue",
+          borderRadius: 10,
+          ignoreHiddenSeries: false,
+        },
         title: {
           text: "各都道府県の総人口",
         },
-        // subtitle: {
-        //   text: '引用：<a href="http://www.data.jma.go.jp/obd/stats/etrn/view/monthly_s1.php?prec_no=44&block_no=47662&year=2019&month=&day=&view=">気象庁</a>',
-        // },
+        subtitle: {
+          text: '引用：<a href="https://resas.go.jp/#/13/13101" target=”_blank rel="noopener noreferrer">RESAS 地域経済分析システム</a>',
+        },
         xAxis: {
+          title: {
+            text: "年度",
+          },
           categories: [],
           crosshair: true,
         },
         yAxis: {
-          title: false,
-          labels: {
-            formatter: function () {
-              return this.value.toLocaleString();
-            },
+          title: {
+            text: "人口数",
           },
+          labels: {},
           opposite: false,
         },
         credits: {
           enabled: false,
         },
         tooltip: {
-          // pointFormat: "{series.name}：{point.y:.1f}人",
           formatter: function () {
-            // console.log(this.point);
             return (
               this.point.series.name +
               "（" +
               +this.point.category +
               "年）：" +
-              this.point.y.toLocaleString()
+              this.point.y.toLocaleString() +
+              "人"
             );
           },
         },
@@ -97,7 +115,6 @@ export default {
         const graphData = {
           name: newChecked.prefName,
           id: newChecked.prefCode,
-          type: "line",
           data: values,
           marker: {
             enabled: true,
@@ -116,8 +133,21 @@ export default {
       console.log(this.graph.series);
       this.graph.series.splice();
     },
+    allClear() {
+      this.$emit("all-clear");
+      this.graph.series.splice(0, this.graph.series.length);
+    },
   },
 };
 </script>
 
-<style></style>
+<style scoped>
+.btn {
+  margin: 0 1.5em;
+}
+.charts {
+  margin: 0 auto;
+  padding: 1em;
+  max-width: 700px;
+}
+</style>
