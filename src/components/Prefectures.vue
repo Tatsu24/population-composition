@@ -1,22 +1,28 @@
 <template>
   <div>
-    <div v-for="i in prefectures" :key="i.prefCode">
+    <span v-for="i in prefectures" :key="i.prefCode">
       <input
         type="checkbox"
         :id="i.prefCode"
-        :value="i.prefCode"
+        :value="i"
         v-model="checked"
+        @click="lastCheck(i)"
       />
       <label :for="i.prefCode">{{ i.prefName }}</label>
-    </div>
-    {{ last }}
+    </span>
+    <!-- {{ last }} -->
+    <composition ref="composition" :checked="checked" :last="last" />
   </div>
 </template>
 
 <script>
 import axios from "axios";
+import composition from "@/components/Composition.vue";
 export default {
   name: "Prefectures",
+  components: {
+    composition,
+  },
   data() {
     return {
       prefectures: [],
@@ -40,10 +46,16 @@ export default {
         const res = await axios.get("/api/v1/prefectures");
         // console.log(res.data.result);
         this.prefectures = res.data.result;
+        // for (let i = 0; i < this.prefectures.length; i++) {
+        //   this.$set(this.prefectures[i], "isChecked", false);
+        // }
         console.log(this.prefectures);
       } catch (error) {
         console.log(error);
       }
+    },
+    lastCheck(i) {
+      this.last = i.prefCode;
     },
   },
 };
